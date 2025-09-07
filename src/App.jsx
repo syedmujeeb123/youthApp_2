@@ -1,16 +1,13 @@
 import "./App.css";
 import MainPage from "./Components/pages/MainPage";
 import RoutesDetails from "./Routes/RoutesDetails";
-import { OptimizedFirebaseProvider } from "./context/OptimizedFirebase";
-import ErrorBoundary from "./Components/UI/reusable/ErrorBoundary";
+import { FirebaseProvider } from "./context/Me_Firebase";
 
 function App() {
   return (
-    <ErrorBoundary>
-      <OptimizedFirebaseProvider>
-        <MainPage />
-      </OptimizedFirebaseProvider>
-    </ErrorBoundary>
+    <FirebaseProvider>
+      <MainPage />
+    </FirebaseProvider>
   );
 }
 

@@ -34,11 +34,20 @@ const firebaseConfig = {
   appId: "1:626921915848:web:cdbe746f0c18966f672cfd"
 };
 
-
+// 🔧 Configure Firebase for production
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const firestore = getFirestore(app);
 export const db = firestore;
+
+// 🚀 Configure Firestore settings for production
+if (typeof window !== 'undefined') {
+  // Only run in browser environment
+  import('firebase/firestore').then(({ enableNetwork }) => {
+    // Enable network for production
+    enableNetwork(firestore);
+  });
+}
 
 const FirebaseContext = createContext(null);
 export const useFirebase = () => useContext(FirebaseContext);

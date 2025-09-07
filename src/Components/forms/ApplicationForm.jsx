@@ -1,30 +1,24 @@
-import { useEffect, useState, useCallback } from "react";
-import { useFirebase } from "../../context/OptimizedFirebase";
+import { useEffect, useState } from "react";
+import { useFirebase } from "../../context/Me_Firebase";
 import InputField from "../UI/reusable/InputField";
 import BackButton from "../UI/reusable/BackTo";
 import Show_username from "../UI/reusable/Show_username";
-import LoadingSpinner from "../UI/reusable/LoadingSpinner";
 import { Link } from "react-router-dom";
-import { initial_formdata, formLabels } from "../../constants/formFields";
+import { initial_formdata,formLabels } from "../../constants/formFields";
 
 const LOCAL_STORAGE_KEY = "applicationFormData";
 
 function ApplicationForm() {
-  const { 
-    user, 
-    submitDailyForm, 
-    getUsernameByUID, 
-    isLoading,
-    userInfoLoading 
-  } = useFirebase();
+  const { user, submitDailyForm, getUsernameByUID } = useFirebase();
 
-  const initialFormData = initial_formdata;
+  const initialFormData = initial_formdata
   
+
   const [formData, setFormData] = useState(initialFormData);
+  const [loading, setLoading] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [invalidFields, setInvalidFields] = useState(new Set());
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -35,7 +29,7 @@ function ApplicationForm() {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(formData));
   }, [formData]);
 
-  const handleChange = useCallback((e) => {
+  const handleChange = (e) => {
     const { name, value, dataset } = e.target;
     const fieldType = dataset.type;
     setFormData((prev) => ({
@@ -45,74 +39,78 @@ function ApplicationForm() {
         [fieldType]: value,
       },
     }));
-  }, []);
+  };
 
-  const handleSubmit = useCallback(async (e) => {
-    e.preventDefault();
-    setErrorMsg("");
-    setSubmitSuccess(false);
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  setErrorMsg("");
+  setSubmitSuccess(false);
 
-    if (!user || !user.uid) {
-      setErrorMsg("❌ You must be logged in to submit the form.");
+  // 🔍 Debug: Check user authentication
+  console.log("🔍 Debug - User:", user);
+  console.log("🔍 Debug - User UID:", user?.uid);
+  console.log("🔍 Debug - Is authenticated:", !!user);
+
+  if (!user || !user.uid) {
+    setErrorMsg("❌ You must be logged in to submit the form.");
+    return;
+  }
+
+  const newInvalidFields = new Set();
+  Object.entries(formData).forEach(([key, field]) => {
+    if (!field.value.trim()) newInvalidFields.add(key);
+  });
+
+  if (newInvalidFields.size > 0) {
+    setInvalidFields(newInvalidFields);
+    setErrorMsg("⚠️ Please fill all the items before submitting.");
+    setTimeout(() => setErrorMsg(""), 3000);
+    return;
+  }
+
+  setInvalidFields(new Set());
+  setLoading(true);
+
+  try {
+    const username = await getUsernameByUID(user.uid);
+    console.log("🔍 Debug - Username:", username);
+    const result = await submitDailyForm(user.uid, username, formData);
+
+    if (!result.success) {
+      setErrorMsg(result.message || "❌ You have already submitted today's form.");
+      setLoading(false);
       return;
     }
 
-    // Validate form fields
-    const newInvalidFields = new Set();
-    Object.entries(formData).forEach(([key, field]) => {
-      if (!field.value.trim()) newInvalidFields.add(key);
-    });
-
-    if (newInvalidFields.size > 0) {
-      setInvalidFields(newInvalidFields);
-      setErrorMsg("⚠️ Please fill all the items before submitting.");
-      setTimeout(() => setErrorMsg(""), 3000);
-      return;
-    }
-
-    setInvalidFields(new Set());
-    setIsSubmitting(true);
-
-    try {
-      const username = await getUsernameByUID(user.uid);
-      const result = await submitDailyForm(user.uid, username, formData);
-
-      if (!result.success) {
-        setErrorMsg(result.message || "❌ You have already submitted today's form.");
-        return;
-      }
-
-      setSubmitSuccess(true);
-      setFormData(initialFormData);
-      localStorage.removeItem(LOCAL_STORAGE_KEY);
-      setTimeout(() => setSubmitSuccess(false), 3000);
-
-    } catch (err) {
-      setErrorMsg("❌ Error submitting form. Please try again.");
-      console.error("Form submission error:", err);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [user, formData, getUsernameByUID, submitDailyForm]);
+    console.log("Form Submitted", formData);
 
 
-  const calculateCompletionPercentage = useCallback(() => {
+
+    setLoading(false);
+    setSubmitSuccess(true);
+    setFormData(initialFormData);
+    localStorage.removeItem(LOCAL_STORAGE_KEY);
+    setTimeout(() => setSubmitSuccess(false), 3000);
+
+
+  } catch (err) {
+    setErrorMsg("❌ Error submitting form. Please try again.");
+    console.error(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+  const calculateCompletionPercentage = () => {
     const total = Object.keys(formData).length;
     const filled = Object.values(formData).filter(f => f.value.trim()).length;
     return Math.round((filled / total) * 100);
-  }, [formData]);
+  };
 
-  const fields = formLabels;
+  const fields = formLabels
+
   const completionPercentage = calculateCompletionPercentage();
-
-  // Show loading spinner if user info is still loading
-  if (userInfoLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-200 to-indigo-200 flex items-center justify-center">
-        <LoadingSpinner size="large" text="Loading your information..." />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-200 to-indigo-200 py-6 px-4">
@@ -232,17 +230,13 @@ function ApplicationForm() {
             <div className="flex justify-center mt-8 mb-4">
               <button
                 type="submit"
-                disabled={isSubmitting || isLoading('submitForm')}
-                className={`px-10 py-3 rounded-lg font-medium text-white shadow-lg transition text-base flex items-center gap-2 ${
-                  isSubmitting || isLoading('submitForm')
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl"
-                }`}
+                disabled={loading}
+                className={`px-10 py-3 rounded-lg font-medium text-white shadow-lg transition text-base ${loading
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl"
+                  }`}
               >
-                {(isSubmitting || isLoading('submitForm')) && (
-                  <LoadingSpinner size="small" color="white" text="" />
-                )}
-                {isSubmitting || isLoading('submitForm') ? "Submitting..." : "Submit Daily Record"}
+                {loading ? "Submitting..." : "Submit Daily Record"}
               </button>
             </div>
 
