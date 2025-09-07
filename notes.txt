@@ -1,0 +1,31 @@
+among all users 
+on todays date :if not submit 
+                                two options : auto submit empty or blank( while displaying if empty keep  empty"" / show not submitted)
+
+show not submitted 
+
+admin dashboard
+of all :
+        todays submissions and pending(not submitted)
+        yesterday's view 
+        past 7 days record
+
+indiviusal :
+        full page{
+                    todays 
+                          submitted? show the form : kindly submit the form
+                    yesterday
+                          submitted? show the form : you have not submitted 
+        }
+
+        record based button based {
+            past 7 days :
+            past 15 days : 
+        }
+
+        select date to date{
+            
+        }
+
+
+

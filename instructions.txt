@@ -1,0 +1,27 @@
+initial steps : create a projecct in firebase ,
+
+                you will get firebase config api keys, copy that 
+
+                go to authentication and select email and pass (activate it )
+
+                then go to firestore and click get started (to activate )
+
+
+
+
+
+1st add firebase config in file name (me_firebase) and in that add those keys in  "const firebaseConfig = { //add here} "
+
+2nd register an account 
+
+3rd open pending user page and then approve the user 
+
+4th go to firebase firestore and in users collection =>userid of user => then add fields => add field 
+
+5th in add field   ( name: isAdmin) (type isboolean)
+
+6th go to routesdetails => uncomment adminprotection route of  </pendinguseradmin > 
+
+
+
+

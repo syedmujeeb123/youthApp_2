@@ -1,0 +1,221 @@
+
+import { createContext, useContext } from "react";
+import { useState, useEffect } from "react";
+import { initializeApp } from "firebase/app";
+
+import { getAuth } from "firebase/auth"
+import { createUserWithEmailAndPassword } from "firebase/auth"; //for resigerting user || register page
+import { signInWithEmailAndPassword } from "firebase/auth"; //for login page
+
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
+import { signOut } from "firebase/auth";
+
+
+
+
+import { getFirestore, setDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs,serverTimestamp } from "firebase/firestore";
+
+
+
+
+const FirebaseContext = createContext(null);
+
+
+
+//  _________________________________________________________________________________________________
+const firebaseConfig = {
+    apiKey: "AIzaSyBYaR1BzhwLn7QsKfNZecQ7Z1VwOVR_F4E",
+    authDomain: "tarbiyah-mujeeb-bhai-halqa.firebaseapp.com",
+    projectId: "tarbiyah-mujeeb-bhai-halqa",
+    storageBucket: "tarbiyah-mujeeb-bhai-halqa.firebasestorage.app",
+    messagingSenderId: "187688277903",
+    appId: "1:187688277903:web:443e3db679eb63a6295dfa"
+};
+
+
+//  _________________________________________________________________________________________________
+export const useFirebase = () => {
+    return useContext(FirebaseContext);
+};
+//  _________________________________________________________________________________________________
+
+const firebaseApp = initializeApp(firebaseConfig);
+
+const firebaseAuth = getAuth(firebaseApp); // firebase auth instance
+const GoProvider = new GoogleAuthProvider //google provider
+const firestore = getFirestore(firebaseApp); // firestore database instance
+//  _________________________________________________________________________________________________
+
+//  _________________________________________________________________________________________________
+
+// form related 
+const formatDate = (date = new Date()) => {
+  return date.toISOString().split('T')[0]; // "YYYY-MM-DD"
+};
+
+
+
+
+
+
+//  _________________________________________________________________________________________________
+export const db = getFirestore(firebaseApp);
+
+
+export const FirebaseProvider = (props) => {
+
+    const [user, setUser] = useState(null);
+
+    useEffect(() => {
+        onAuthStateChanged(firebaseAuth, (user) => {
+            if (user) {
+                setUser(user);
+
+            } else {
+                setUser(null);
+            }
+        });
+    }, []);
+
+    //  _________________________________________________________________________________________________
+    // my changes
+
+    // const registeringwithuserandpass = async (email, password) => {
+    //     try {
+    //         const result = await createUserWithEmailAndPassword(firebaseAuth, email, password);
+    //         return result; // ✅ Return the result to the caller
+    //     } catch (error) {
+    //         throw error; // ✅ Let the caller handle the error
+    //     }
+    // };
+
+    const registeringwithuserandpass = async (name, email, password) => {
+        try {
+            const result = await createUserWithEmailAndPassword(firebaseAuth, email, password);
+            const user = result.user;
+
+            // Save additional user info (like name) in Firestore
+            await setDoc(doc(firestore, 'users', user.uid), {
+                name: name,
+                email: email,
+                uid: user.uid,
+                createdAt: new Date(),
+            });
+
+            return result;
+        } catch (error) {
+            throw error;
+        }
+    };
+
+    //  _________________________________________________________________________________________________
+
+
+    // Sign-in function with async/await and error handling
+    const signinguserwithemailandpass = async (email, password) => {
+        try {
+            const result = await signInWithEmailAndPassword(firebaseAuth, email, password);
+            return result; // ✅ Return the result to the caller
+        } catch (error) {
+            throw error; // ✅ Let the caller handle the error
+        }
+    };
+
+    const signInWithGoogle = async () => {
+        try {
+            const result = await signInWithPopup(firebaseAuth, GoProvider);
+            return result; // ✅ Return the result to the caller
+        } catch (error) {
+            throw error; // ✅ Let the caller handle the error
+        }
+    };
+
+
+    const logout = async () => {
+        try {
+            await signOut(firebaseAuth);
+        } catch (error) {
+            console.error("Logout failed:", error);
+        }
+    };
+
+
+    const getUserInfo = async (uid) => {
+        try {
+            const docRef = doc(db, "users", uid);
+            const docSnap = await getDoc(docRef);
+            return docSnap.exists() ? docSnap.data() : null;
+        } catch (error) {
+            console.error("Error fetching user info:", error);
+            return null;
+        }
+    };
+
+    const getUserForms = async (uid) => {
+        try {
+            const q = query(collection(db, "dailyForms"), where("userId", "==", uid));
+            const snapshot = await getDocs(q);
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (error) {
+            console.error("Error fetching user forms:", error);
+            return [];
+        }
+    };
+
+
+
+
+
+    const submitDailyForm = async (uid, name, formData) => {
+    const today = formatDate();
+    const docId = `${uid}_${today}`;
+
+    try {
+      await setDoc(doc(db, "dailyForms", docId), {
+        userId: uid,
+        name: name,
+        formData: formData,
+        date: today,
+        createdAt: serverTimestamp()
+      });
+
+      return { success: true };
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      return { success: false, error: error.message };
+    }
+  };
+
+
+
+
+
+    // const isloggedin = user? true : false;
+    const isloggedin = user ? true : false
+
+
+    //  _________________________________________________________________________________________________
+
+    return (
+        <FirebaseContext.Provider value={{
+            registeringwithuserandpass,
+            signinguserwithemailandpass,
+            signInWithGoogle,
+            isloggedin,
+            firestore,
+            user,
+            logout,
+            getUserInfo,
+            getUserForms,
+            submitDailyForm,
+        }}  >
+            {props.children}
+        </FirebaseContext.Provider>
+    )
+}
+
+
+//  _________________________________________________________________________________________________
+
