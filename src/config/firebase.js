@@ -1,5 +1,5 @@
 import { initializeApp, getApps } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 // Firebase Configuration
@@ -20,8 +20,15 @@ if (getApps().length === 0) {
   app = getApps()[0];
 }
 
-// Initialize Firebase Auth
+// Initialize Firebase Auth with proper persistence
 export const auth = getAuth(app);
+
+// Set persistence to handle multiple devices properly
+if (typeof window !== 'undefined') {
+  setPersistence(auth, browserLocalPersistence).catch((error) => {
+    console.log('Persistence setting error:', error);
+  });
+}
 
 // Initialize Firestore
 export const firestore = getFirestore(app);

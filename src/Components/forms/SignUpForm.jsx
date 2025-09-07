@@ -1,19 +1,14 @@
 import { useState } from "react";
-
-import { useAuth } from "../../context/AuthContext";
-import InputField from "../UI/reusable/InputField";
-import ReusableButton from "../UI/reusable/ReusableButton";
-
-//  _________________________________________________________________________________________________
-// my changes
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
-
+import { useAuth } from "../../context/AuthContext";
 import { useFirebase } from '../../context/Me_Firebase';
+import InputField from "../UI/reusable/InputField";
+import ReusableButton from "../UI/reusable/ReusableButton";
 import Show_username from "../UI/reusable/Show_username";
 import BackButton from "../UI/reusable/BackTo";
-
 import { Link } from "react-router-dom";
+import { handleMultipleDeviceLogin } from "../../utils/sessionManager";
 
 
 
@@ -52,9 +47,29 @@ const SignUpForm = () => {
       console.log(signUpForm, "signUpForm");
       const result = await fire.registeringwithuserandpass(name, email, password);
       console.log("Signup successful:", result);
-      navigate("/"); // redirect after signup if needed
+      
+      // Handle multiple device login
+      if (result.user) {
+        handleMultipleDeviceLogin(result.user);
+      }
+      
+      // Show success message
+      alert("✅ Signup successful! Please wait for admin approval.");
+      navigate("/login"); // redirect to login page
     } catch (error) {
       console.error("Signup failed:", error);
+      
+      // Show user-friendly error messages
+      let errorMessage = "Signup failed. Please try again.";
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = "This email is already registered.";
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = "Password should be at least 6 characters.";
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = "Please enter a valid email address.";
+      }
+      
+      alert(`❌ ${errorMessage}`);
     }
   };
 

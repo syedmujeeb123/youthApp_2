@@ -54,17 +54,33 @@ export const FirebaseProvider = ({ children }) => {
   const pendingRef = collection(firestore, "pendingUsers");
   const dailyRecordsRef = collection(firestore, "dailyRecords");
 
-  // 🧾 Auth Observer with simplified error handling
+  // 🧾 Auth Observer with multiple device support
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
       try {
         setUser(u);
         if (u) {
           setLoading('userInfo', true);
+          
+          // Add device info for multi-device tracking
+          const deviceInfo = {
+            userAgent: navigator.userAgent,
+            timestamp: new Date().toISOString(),
+            deviceId: localStorage.getItem('deviceId') || Math.random().toString(36).substr(2, 9)
+          };
+          
+          // Store device info
+          if (!localStorage.getItem('deviceId')) {
+            localStorage.setItem('deviceId', deviceInfo.deviceId);
+          }
+          
           const snap = await getDoc(doc(usersRef, u.uid));
           setUserInfo(snap.exists() ? snap.data() : null);
+          
+          console.log('✅ User authenticated:', u.email, 'Device:', deviceInfo.deviceId);
         } else {
           setUserInfo(null);
+          console.log('👤 User logged out');
         }
       } catch (error) {
         console.error('Auth state change error:', error);
