@@ -4,7 +4,9 @@ import InputField from "../UI/reusable/InputField";
 import BackButton from "../UI/reusable/BackTo";
 import Show_username from "../UI/reusable/Show_username";
 import { Link } from "react-router-dom";
-import { initial_formdata,formLabels } from "../../constants/formFields";
+import { initial_formdata, formLabels } from "../../constants/formFields";
+import { testFirestoreConnection } from "../../utils/firestoreTest";
+import { debugFirebaseState, clearFirebaseCache } from "../../utils/firebaseDebug";
 
 const LOCAL_STORAGE_KEY = "applicationFormData";
 
@@ -19,6 +21,7 @@ function ApplicationForm() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [invalidFields, setInvalidFields] = useState(new Set());
+  const [connectionTest, setConnectionTest] = useState(null);
 
   useEffect(() => {
     const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -108,8 +111,24 @@ function ApplicationForm() {
     return Math.round((filled / total) * 100);
   };
 
-  const fields = formLabels
+  const testConnection = async () => {
+    setConnectionTest("Testing...");
+    const result = await testFirestoreConnection();
+    setConnectionTest(result.success ? "✅ Connected" : `❌ ${result.message}`);
+  };
 
+  const debugFirebase = () => {
+    const debugInfo = debugFirebaseState();
+    console.log('🔍 Firebase Debug Info:', debugInfo);
+    setConnectionTest(`🔍 Debug: ${debugInfo.appCount} apps, Browser: ${debugInfo.isBrowser}`);
+  };
+
+  const clearCache = () => {
+    clearFirebaseCache();
+    setConnectionTest("🧹 Cache cleared - refresh page");
+  };
+
+  const fields = formLabels;
   const completionPercentage = calculateCompletionPercentage();
 
   return (
@@ -154,6 +173,27 @@ function ApplicationForm() {
     >
       📊 View My Summary
     </Link>
+    
+    <button
+      onClick={testConnection}
+      className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm text-center"
+    >
+      🧪 Test Connection
+    </button>
+    
+    <button
+      onClick={debugFirebase}
+      className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm text-center"
+    >
+      🔍 Debug Firebase
+    </button>
+    
+    <button
+      onClick={clearCache}
+      className="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700 text-sm text-center"
+    >
+      🧹 Clear Cache
+    </button>
   </div>
 </div>
 
@@ -243,6 +283,18 @@ function ApplicationForm() {
             {errorMsg && (
               <div className="text-red-600 text-center font-medium mb-4">
                 {errorMsg}
+              </div>
+            )}
+
+            {connectionTest && (
+              <div className="mt-4 flex justify-center">
+                <div className={`px-4 py-3 rounded-lg text-center text-sm font-medium border ${
+                  connectionTest.includes('✅') 
+                    ? 'bg-green-50 text-green-600 border-green-200' 
+                    : 'bg-red-50 text-red-600 border-red-200'
+                }`}>
+                  {connectionTest}
+                </div>
               </div>
             )}
 

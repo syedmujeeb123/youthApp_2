@@ -3,9 +3,7 @@
 // Me_Firebase.jsx
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { initializeApp } from "firebase/app";
 import {
-  getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   onAuthStateChanged,
@@ -13,7 +11,6 @@ import {
   deleteUser,
 } from "firebase/auth";
 import {
-  getFirestore,
   doc,
   getDoc,
   getDocs,
@@ -23,31 +20,10 @@ import {
   updateDoc,
   deleteDoc,
 } from "firebase/firestore";
+import { auth, firestore } from "../config/firebase";
 
-// ✅ Firebase Config
-const firebaseConfig = {
-  apiKey: "AIzaSyAThHyZI29NeU9OJ128CtyJvPPUWu3acIY",
-  authDomain: "one-halqa.firebaseapp.com",
-  projectId: "one-halqa",
-  storageBucket: "one-halqa.firebasestorage.app",
-  messagingSenderId: "626921915848",
-  appId: "1:626921915848:web:cdbe746f0c18966f672cfd"
-};
-
-// 🔧 Configure Firebase for production
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const firestore = getFirestore(app);
+// Export db for compatibility
 export const db = firestore;
-
-// 🚀 Configure Firestore settings for production
-if (typeof window !== 'undefined') {
-  // Only run in browser environment
-  import('firebase/firestore').then(({ enableNetwork }) => {
-    // Enable network for production
-    enableNetwork(firestore);
-  });
-}
 
 const FirebaseContext = createContext(null);
 export const useFirebase = () => useContext(FirebaseContext);
@@ -60,6 +36,15 @@ export const FirebaseProvider = ({ children }) => {
   const [userInfoLoading, setUserInfoLoading] = useState(true);
   const [cachedAllUsers, setCachedAllUsers] = useState(null);
   const [cachedRejectedUsers, setCachedRejectedUsers] = useState(null);
+  const [loadingStates, setLoadingStates] = useState({});
+
+  // 🔄 Loading State Management
+  const setLoading = (key, isLoading) => {
+    setLoadingStates(prev => ({
+      ...prev,
+      [key]: isLoading
+    }));
+  };
 
   const isloggedin = !!user;
 
@@ -69,20 +54,28 @@ export const FirebaseProvider = ({ children }) => {
   const pendingRef = collection(firestore, "pendingUsers");
   const dailyRecordsRef = collection(firestore, "dailyRecords");
 
-  // 🧾 Auth Observer
+  // 🧾 Auth Observer with simplified error handling
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
-      setUser(u);
-      if (u) {
-        const snap = await getDoc(doc(usersRef, u.uid));
-        setUserInfo(snap.exists() ? snap.data() : null);
-      } else {
+      try {
+        setUser(u);
+        if (u) {
+          setLoading('userInfo', true);
+          const snap = await getDoc(doc(usersRef, u.uid));
+          setUserInfo(snap.exists() ? snap.data() : null);
+        } else {
+          setUserInfo(null);
+        }
+      } catch (error) {
+        console.error('Auth state change error:', error);
         setUserInfo(null);
+      } finally {
+        setUserInfoLoading(false);
+        setLoading('userInfo', false);
       }
-      setUserInfoLoading(false);
     });
     return unsub;
-  }, []);
+  }, [usersRef, setLoading]);
 
   // 🔐 Register User → Pending
   const registeringwithuserandpass = async (name, email, password) => {
@@ -191,29 +184,34 @@ export const FirebaseProvider = ({ children }) => {
     return user?.name || "Anonymous";
   };
 
-  // 📝 Form Submission (once per day)
+  // 📝 Form Submission (once per day) with simplified error handling
   const submitDailyForm = async (uid, name, formData) => {
-    const today = formatDate();
-    const ref = doc(dailyRecordsRef, today);
-    const snap = await getDoc(ref);
-    const data = snap.exists() ? snap.data() : {};
+    try {
+      const today = formatDate();
+      const ref = doc(dailyRecordsRef, today);
+      const snap = await getDoc(ref);
+      const data = snap.exists() ? snap.data() : {};
 
-    if (data.students?.[uid]) {
-      return { success: false, message: "Already submitted today." };
+      if (data.students?.[uid]) {
+        return { success: false, message: "Already submitted today." };
+      }
+
+      const updated = {
+        ...(data.students || {}),
+        [uid]: {
+          name,
+          submitted: true,
+          submittedAt: serverTimestamp(),
+          formData,
+        },
+      };
+
+      await setDoc(ref, { students: updated }, { merge: true });
+      return { success: true };
+    } catch (error) {
+      console.error('Form submission error:', error);
+      return { success: false, message: `Error submitting form: ${error.message}` };
     }
-
-    const updated = {
-      ...(data.students || {}),
-      [uid]: {
-        name,
-        submitted: true,
-        submittedAt: serverTimestamp(),
-        formData,
-      },
-    };
-
-    await setDoc(ref, { students: updated }, { merge: true });
-    return { success: true };
   };
 
   // 📅 Get Form Data by Date
