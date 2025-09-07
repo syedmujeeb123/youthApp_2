@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useFirebase } from "../../context/Me_Firebase";
+import { useFirebase } from "../../context/SimpleFirebase";
 import InputField from "../UI/reusable/InputField";
 import BackButton from "../UI/reusable/BackTo";
 import Show_username from "../UI/reusable/Show_username";

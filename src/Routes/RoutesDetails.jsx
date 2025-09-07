@@ -14,7 +14,7 @@ import AdminProtectedRoute from "./AdminProtectedRoute";
 import Admindash from "../../admin/Admindash";
 import PendingUsersAdmin from "../../admin/pending_users/PendingUsersAdmin";
 import StudentSummaryIndividual from "../Components/students/StudentSummaryIndividual";
-import { useFirebase } from "../context/Me_Firebase";
+import { useFirebase } from "../context/SimpleFirebase";
 import { useAuth } from "../context/AuthContext";
 
 function RoutesDetails({ showNavbar, toggleNavbar }) {

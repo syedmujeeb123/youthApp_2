@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useAuth } from "../../context/AuthContext";
-import { useFirebase } from '../../context/Me_Firebase';
+import { useFirebase } from '../../context/SimpleFirebase';
 import InputField from "../UI/reusable/InputField";
 import ReusableButton from "../UI/reusable/ReusableButton";
 import Show_username from "../UI/reusable/Show_username";

@@ -1,13 +1,13 @@
 import "./App.css";
 import MainPage from "./Components/pages/MainPage";
 import RoutesDetails from "./Routes/RoutesDetails";
-import { FirebaseProvider } from "./context/Me_Firebase";
+import { SimpleFirebaseProvider } from "./context/SimpleFirebase";
 
 function App() {
   return (
-    <FirebaseProvider>
+    <SimpleFirebaseProvider>
       <MainPage />
-    </FirebaseProvider>
+    </SimpleFirebaseProvider>
   );
 }
 

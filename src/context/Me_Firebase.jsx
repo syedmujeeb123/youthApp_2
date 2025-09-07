@@ -2,7 +2,7 @@
 // optimized code 3
 // Me_Firebase.jsx
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -21,6 +21,7 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 import { auth, firestore } from "../config/firebase";
+import { detectInfiniteLoop } from "../utils/loopDetector";
 
 // Export db for compatibility
 export const db = firestore;
@@ -31,6 +32,9 @@ export const useFirebase = () => useContext(FirebaseContext);
 const formatDate = (date = new Date()) => date.toLocaleDateString("en-CA");
 
 export const FirebaseProvider = ({ children }) => {
+  // Detect infinite loops
+  detectInfiniteLoop('FirebaseProvider');
+  
   const [user, setUser] = useState(null);
   const [userInfo, setUserInfo] = useState(null);
   const [userInfoLoading, setUserInfoLoading] = useState(true);
@@ -39,12 +43,12 @@ export const FirebaseProvider = ({ children }) => {
   const [loadingStates, setLoadingStates] = useState({});
 
   // 🔄 Loading State Management
-  const setLoading = (key, isLoading) => {
+  const setLoading = useCallback((key, isLoading) => {
     setLoadingStates(prev => ({
       ...prev,
       [key]: isLoading
     }));
-  };
+  }, []);
 
   const isloggedin = !!user;
 
@@ -60,7 +64,7 @@ export const FirebaseProvider = ({ children }) => {
       try {
         setUser(u);
         if (u) {
-          setLoading('userInfo', true);
+          setLoadingStates(prev => ({ ...prev, userInfo: true }));
           
           // Add device info for multi-device tracking
           const deviceInfo = {
@@ -87,14 +91,14 @@ export const FirebaseProvider = ({ children }) => {
         setUserInfo(null);
       } finally {
         setUserInfoLoading(false);
-        setLoading('userInfo', false);
+        setLoadingStates(prev => ({ ...prev, userInfo: false }));
       }
     });
     return unsub;
-  }, [usersRef, setLoading]);
+  }, [usersRef]);
 
   // 🔐 Register User → Pending
-  const registeringwithuserandpass = async (name, email, password) => {
+  const registeringwithuserandpass = useCallback(async (name, email, password) => {
     const result = await createUserWithEmailAndPassword(auth, email, password);
     const user = result.user;
 
@@ -106,12 +110,12 @@ export const FirebaseProvider = ({ children }) => {
     });
 
     return result;
-  };
+  }, [pendingRef]);
 
   // 🔑 Login / Logout
-  const signinguserwithemailandpass = (email, password) =>
-    signInWithEmailAndPassword(auth, email, password);
-  const logout = () => signOut(auth);
+  const signinguserwithemailandpass = useCallback((email, password) =>
+    signInWithEmailAndPassword(auth, email, password), []);
+  const logout = useCallback(() => signOut(auth), []);
 
   // 🟡 Check Approval Status
   const checkApprovalStatus = async (uid) => {
@@ -201,7 +205,7 @@ export const FirebaseProvider = ({ children }) => {
   };
 
   // 📝 Form Submission (once per day) with simplified error handling
-  const submitDailyForm = async (uid, name, formData) => {
+  const submitDailyForm = useCallback(async (uid, name, formData) => {
     try {
       const today = formatDate();
       const ref = doc(dailyRecordsRef, today);
@@ -228,7 +232,7 @@ export const FirebaseProvider = ({ children }) => {
       console.error('Form submission error:', error);
       return { success: false, message: `Error submitting form: ${error.message}` };
     }
-  };
+  }, [dailyRecordsRef]);
 
   // 📅 Get Form Data by Date
   const getDailyRecordByDate = async (date) => {
