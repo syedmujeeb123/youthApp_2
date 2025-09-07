@@ -1,7 +1,7 @@
 // optimized code 3
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { useFirebase } from "../context/Me_Firebase";
+import { useFirebase } from "../context/SimpleFirebase";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../context/Me_Firebase";
 
@@ -145,7 +145,7 @@ export default AdminProtectedRoute;
 // // optimized code 2
 // import { useEffect, useState } from "react";
 // import { Navigate } from "react-router-dom";
-// import { useFirebase } from "../context/Me_Firebase";
+// import { useFirebase } from "../context/SimpleFirebase";
 // import { doc, getDoc } from "firebase/firestore";
 // import { db } from "../context/Me_Firebase";
 
@@ -284,7 +284,7 @@ export default AdminProtectedRoute;
 
 // optimized code 1
 // import { Navigate } from "react-router-dom";
-// import { useFirebase } from "../context/Me_Firebase";
+// import { useFirebase } from "../context/SimpleFirebase";
 
 // const AdminProtectedRoute = ({ children }) => {
 //   const { user, userInfo, isloggedin, userInfoLoading } = useFirebase();
@@ -336,7 +336,7 @@ export default AdminProtectedRoute;
 // ____________________________________________________________________________________________________________________
 
 // import { Navigate } from "react-router-dom";
-// import { useFirebase } from "../context/Me_Firebase";
+// import { useFirebase } from "../context/SimpleFirebase";
 
 // const AdminProtectedRoute = ({ children }) => {
 //   const { user, userInfo, isloggedin, userInfoLoading } = useFirebase();

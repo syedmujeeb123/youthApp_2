@@ -21,7 +21,6 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 import { auth, firestore } from "../config/firebase";
-import { detectInfiniteLoop } from "../utils/loopDetector";
 
 // Export db for compatibility
 export const db = firestore;
@@ -32,9 +31,6 @@ export const useFirebase = () => useContext(FirebaseContext);
 const formatDate = (date = new Date()) => date.toLocaleDateString("en-CA");
 
 export const FirebaseProvider = ({ children }) => {
-  // Detect infinite loops
-  detectInfiniteLoop('FirebaseProvider');
-  
   const [user, setUser] = useState(null);
   const [userInfo, setUserInfo] = useState(null);
   const [userInfoLoading, setUserInfoLoading] = useState(true);

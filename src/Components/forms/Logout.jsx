@@ -1,4 +1,4 @@
-import { useFirebase } from "../../context/Me_Firebase";
+import { useFirebase } from "../../context/SimpleFirebase";
 import { useNavigate } from "react-router-dom";
 
 function Logout() {

@@ -10,7 +10,7 @@ import BackButton from "../UI/reusable/BackTo";
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 
-import { useFirebase } from '../../context/Me_Firebase';
+import { useFirebase } from '../../context/SimpleFirebase';
 
 
 //  _________________________________________________________________________________________________

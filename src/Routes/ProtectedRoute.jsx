@@ -10,7 +10,7 @@
 
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { useFirebase } from "../context/Me_Firebase";
+import { useFirebase } from "../context/SimpleFirebase";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../context/Me_Firebase";
 
@@ -140,7 +140,7 @@ export default ProtectedRoute;
 
 // import { Navigate } from "react-router-dom";
 // import { useEffect, useState } from "react";
-// import { useFirebase } from "../context/Me_Firebase";
+// import { useFirebase } from "../context/SimpleFirebase";
 
 // const ProtectedRoute = ({ children }) => {
 //   const { user, isloggedin, logout, checkApprovalStatus } = useFirebase();
@@ -270,7 +270,7 @@ export default ProtectedRoute;
 
 
 // import { Navigate } from "react-router-dom";
-// import { useFirebase } from "../context/Me_Firebase";
+// import { useFirebase } from "../context/SimpleFirebase";
 // import { useEffect, useState } from "react";
 // import { doc, getDoc } from "firebase/firestore";
 // import { db } from "../context/Me_Firebase";

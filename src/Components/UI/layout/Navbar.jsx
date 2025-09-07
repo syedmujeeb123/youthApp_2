@@ -7,8 +7,8 @@ import { useAuth } from "../../../context/AuthContext";
 
 import { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
-import { useFirebase } from "../../../context/Me_Firebase"; // adjust path
-import { db } from "../../../context/Me_Firebase";
+import { useFirebase } from "../../../context/SimpleFirebase"; // adjust path
+import { db } from "../../../context/SimpleFirebase";
 
 import Show_username from "../reusable/Show_username";
 

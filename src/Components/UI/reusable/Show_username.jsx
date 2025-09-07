@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { useFirebase } from "../../../context/Me_Firebase"; // adjust path
+import { useFirebase } from "../../../context/SimpleFirebase"; // adjust path
 import { doc, getDoc } from "firebase/firestore";
-import {db} from "../../../context/Me_Firebase";
+import {db} from "../../../context/SimpleFirebase";
 const Show_username = () => {
   const { user, isloggedin } = useFirebase();
   const [username, setUsername] = useState("");
